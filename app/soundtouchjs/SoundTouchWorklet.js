@@ -27,6 +27,8 @@ import "regenerator-runtime/runtime";
 import { SoundTouch, SimpleFilter } from "soundtouchjs";
 import ProcessAudioBufferSource from "./ProcessAudioBufferSource";
 
+let counter = 0;
+
 class SoundTouchWorklet extends AudioWorkletProcessor {
   /**
    * @constructor
@@ -164,8 +166,16 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
    * @param {*} outputs - single output of two {Float32Array(128)} channels
    */
   process(inputs, outputs) {
-    if (inputs[0].length !== 0) {
-      console.log(inputs);
+    if (inputs[0].length !== 0 || counter < 100) {
+      console.log(inputs, outputs);
+      // const output = outputs[0]
+      // output.forEach(channel => {
+      //   for (let i = 0; i < channel.length; i++) {
+      //     channel[i] = Math.random() * 2 - 1
+      //   }
+      // })
+      // return true
+      counter++;
     }
     // console.log(inputs);
     // if not initialized and no input data then don't chew process cycles
@@ -178,9 +188,9 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
     const right = outputs[0][1];
     const samples = this._samples;
 
-    if (!left || (left && !left.length)) {
-      return false;
-    }
+    // if (!left || (left && !left.length)) {
+    //   return false;
+    // }
 
     /**
      * Process frames into sample buffer, 128 frames at a time. This is the change from the previous process,
@@ -193,12 +203,12 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
      **/
     const framesExtracted = this._filter.extract(samples, inputs[0][0].length);
 
-    if (!framesExtracted) {
-      this._sendMessage("PROCESSOR_END");
-      return false;
-    }
+    // if (!framesExtracted) {
+    //   this._sendMessage("PROCESSOR_END");
+    //   return false;
+    // }
 
-    this._sendMessage("SOURCEPOSITION", this._filter.sourcePosition);
+    // this._sendMessage("SOURCEPOSITION", this._filter.sourcePosition);
 
     /**
      * Write new frames to the outputs

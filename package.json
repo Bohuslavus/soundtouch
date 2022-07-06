@@ -11,10 +11,10 @@
     "regenerator-runtime": "^0.13.9",
     "soundtouchjs": "^0.1.30"
   },
-  "repository": "Bohooslav/soundtouch",
+  "repository": "Bohuslavus/soundtouch",
   "description": "SoundTouch.js implementation as a real AudioNode using audio worklet",
   "version": "1.0.0",
-  "homepage": "https://github.com/Bohooslav/soundtouch",
-  "author": "Author Name (https://github.com/Bohooslav)",
+  "homepage": "https://github.com/Bohuslavus/soundtouch",
+  "author": "Author Name (https://github.com/Bohuslavus)",
   "license": "ISC"
 }

@@ -7,8 +7,7 @@ import { unstable_getHowlInternals } from './utils';
 import createSoundTouchNode from "./soundtouchjs/createSoundTouchNode"
 const script = import.worker('./soundtouchjs/SoundTouchWorklet')
 
-const audioContext = new window.AudioContext();
-audioContext.audioWorklet.addModule(script.url).catch(console.log);
+let audioContext = null
 
 
 let state = {
@@ -20,6 +19,7 @@ let playing = false
 tag player
 	sound
 	soundTouchNode
+	newProcessorNode
 
 	def mount
 		load!
@@ -33,36 +33,40 @@ tag player
 		if sound && sound.state() !== 'unloaded'
 			stop()
 			# unload()
-
+		
+		if !audioContext
+			audioContext = new AudioContext();
+			await audioContext.resume();
+			await audioContext.audioWorklet.addModule(script.url).catch(console.log);
 
 		sound = await loadSound(audio);
 		sound.on('end', this.handleOnEnd);
-
-
 		
-		# const unstable_soundInternals = unstable_getHowlInternals(sound)
-		# let source = audioContext.createMediaElementSource(unstable_soundInternals.node);
-		# source.connect(audioContext.destination);
-		# log source, unstable_soundInternals
-		# return new AudioWorkletNode(audioContext, "soundtouch-worklet");
+		const unstable_soundInternals = unstable_getHowlInternals(sound)
+		let source = audioContext.createMediaElementSource(unstable_soundInternals.node);
+		source.connect(audioContext.destination);
 
+		newProcessorNode =  new AudioWorkletNode(audioContext, "soundtouch-worklet");
+		newProcessorNode.connect(audioContext.destination);
+		log newProcessorNode
 
-		let request = new XMLHttpRequest();
-		request.open('GET', audio, true);
-		request.responseType = 'arraybuffer';
+		# let request = new XMLHttpRequest();
+		# request.open('GET', audio, true);
+		# request.responseType = 'arraybuffer';
 
-		request.onload = do()
-			console.log('audio loaded');
+		# request.onload = do()
+		# 	console.log('audio loaded');
 
-			const SoundTouchNode = createSoundTouchNode(audioContext, window.AudioWorkletNode, request.response);
-			SoundTouchNode.on('initialized', do()
-				self.soundTouchNode = SoundTouchNode;
-				console.log('isFinite')
-			);
-			SoundTouchNode.on('play', do(details) console.log(details))
+		# 	const SoundTouchNode = createSoundTouchNode(audioContext, window.AudioWorkletNode, request.response);
+		# 	SoundTouchNode.on('initialized', do()
+		# 		self.soundTouchNode = SoundTouchNode;
+		# 		console.log('SoundTouchNode Initialized')
+		# 	);
+		# 	SoundTouchNode.on('play', do(details) console.log(details))
 
-		console.log('reading audio');
-		request.send();
+		# console.log('reading audio');
+		# request.send();
+
 
 
 
@@ -86,10 +90,12 @@ tag player
 		)
 
 	def play
+		if audioContext.state === 'suspended'
+			audioContext.resume()
 		sound.play();
-		soundTouchNode.connectToBuffer();
-		soundTouchNode.connect(audioContext.destination);
-		soundTouchNode.play()
+		# soundTouchNode.connectToBuffer();
+		# soundTouchNode.connect(audioContext.destination);
+		# soundTouchNode.play()
 		log sound
 		playing = true
 
@@ -99,7 +105,7 @@ tag player
 
 	def pause
 		sound.pause();
-		soundTouchNode.pause()
+		# soundTouchNode.pause()
 		playing = false
 
 	def seek elapsed
